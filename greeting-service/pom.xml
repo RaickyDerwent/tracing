@@ -16,6 +16,15 @@
             <artifactId>grpc-spring-boot-starter</artifactId>
             <version>2.14.0.RELEASE</version>
         </dependency>
+        <dependency>
+            <artifactId>spring-cloud-starter-sleuth</artifactId>
+            <groupId>org.springframework.cloud</groupId>
+        </dependency>
+        <dependency>
+            <artifactId>brave-instrumentation-grpc</artifactId>
+            <groupId>io.zipkin.brave</groupId>
+            <version>5.14.1</version>
+        </dependency>
     </dependencies>
 
     <repositories>
