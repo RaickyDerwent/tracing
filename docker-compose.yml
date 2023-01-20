@@ -1,0 +1,80 @@
+version: '3'
+
+services:
+#  storage:
+#    image: ghcr.io/openzipkin/zipkin-mysql:${TAG:-latest}
+#    container_name: mysql
+#    # Uncomment to expose the storage port for testing
+#    # ports:
+#    #   - 3306:3306
+
+  # Use MySQL instead of in-memory storage
+  zipkin:
+    image: ghcr.io/openzipkin/zipkin-slim:${TAG:-latest}
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    environment:
+      - STORAGE_TYPE=mem
+      - MYSQL_HOST=mysql
+      # Add the baked-in username and password for the zipkin-mysql image
+      - MYSQL_USER=zipkin
+      - MYSQL_PASS=zipkin
+#    depends_on:
+#      - storage
+
+  otel-collector:
+    container_name: otel-collector
+    image: otel/opentelemetry-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    depends_on:
+      - zipkin
+    volumes:
+      - ./otel-collector-logging-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "1888:1888"   # pprof extension
+      - "8888:8888"   # Prometheus metrics exposed by the collector
+      - "8889:8889"   # Prometheus exporter metrics
+      - "13133:13133" # health_check extension
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP http receiver
+      - "55679:55679" # zpages extension
+
+  greeting-service:
+    container_name: greeting-service
+    image: com.example/greeting-service:v1.0.0
+    depends_on:
+      - zipkin
+      - otel-collector
+    environment:
+      OTEL_TRACES_EXPORTER : none
+      OTEL_METRICS_EXPORTER : otlp
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_RESOURCE_ATTRIBUTES : service.name=greeting-service,service-version=1.0
+      SPRING_APPLICATION_JSON: '{
+        "spring.zipkin.base-url":"http://zipkin:9411/"
+      }'
+    build:
+      context: ./greeting-service
+    ports:
+      - "9090:9090"
+
+  hello-service:
+    container_name: hello-service
+    image: com.example/hello-service:v1.0.0
+    depends_on:
+      - zipkin
+      - otel-collector
+    environment:
+      OTEL_TRACES_EXPORTER: none
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_RESOURCE_ATTRIBUTES: service.name=hello-service,service-version=1.0
+      SPRING_APPLICATION_JSON: '{
+        "grpc.client.greeting-service.address":"static://greeting-service:9090",
+        "spring.zipkin.base-url":"http://zipkin:9411/"
+      }'
+    build:
+      context: ./hello-service
+    ports:
+      - "9091:9091"
