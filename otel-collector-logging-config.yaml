@@ -11,13 +11,17 @@ processors:
 exporters:
   logging:
     loglevel: debug
+  zipkin:
+    endpoint: http://zipkin:9411/api/v2/spans
+    tls:
+      insecure: true
 
 service:
   pipelines:
     traces:
       receivers: [ otlp ]
       processors: [ batch ]
-      exporters: [ logging ]
+      exporters: [ logging , zipkin ]
     metrics:
       receivers: [ otlp ]
       processors: [ batch ]
