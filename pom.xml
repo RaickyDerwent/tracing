@@ -19,9 +19,7 @@
 	</modules>
 
 	<packaging>pom</packaging>
-	<properties>
-		<java.version>11</java.version>
-	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -37,6 +35,28 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+
+		<!--	OTEL Dependencies	-->
+		<dependency>
+			<artifactId>opentelemetry-api</artifactId>
+			<groupId>io.opentelemetry</groupId>
+			<version>1.20.1</version>
+		</dependency>
+		<dependency>
+			<artifactId>opentelemetry-instrumentation-annotations</artifactId>
+			<groupId>io.opentelemetry.instrumentation</groupId>
+			<version>1.20.1</version>
+		</dependency>
+		<dependency>
+			<artifactId>opentelemetry-api-trace</artifactId>
+			<groupId>io.opentelemetry</groupId>
+			<version>${otel.traces.api.version}</version>
+		</dependency>
+		<dependency>
+			<artifactId>opentelemetry-api-metrics</artifactId>
+			<groupId>io.opentelemetry</groupId>
+			<version>${otel.metrics.api.version}</version>
 		</dependency>
 	</dependencies>
 
@@ -56,5 +76,11 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<properties>
+		<java.version>11</java.version>
+		<otel.metrics.api.version>1.10.0-alpha-rc.1</otel.metrics.api.version>
+		<otel.traces.api.version>0.13.1</otel.traces.api.version>
+	</properties>
 
 </project>

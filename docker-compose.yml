@@ -20,15 +20,33 @@ services:
       # Add the baked-in username and password for the zipkin-mysql image
       - MYSQL_USER=zipkin
       - MYSQL_PASS=zipkin
-#    depends_on:
-#      - storage
+  #    depends_on:
+  #      - storage
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    hostname: prometheus
+    command:
+      - --config.file=/etc/prometheus.yaml
+      - --web.enable-remote-write-receiver
+      - --enable-feature=exemplar-storage
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus.yaml
+    ports:
+      - "9090:9090"
+    healthcheck:
+      interval: 5s
+      retries: 10
+      test: wget --no-verbose --tries=1 --spider http://localhost:9090/status || exit 1
 
   otel-collector:
     container_name: otel-collector
     image: otel/opentelemetry-collector
-    command: ["--config=/etc/otel-collector-config.yaml"]
+    command: [ "--config=/etc/otel-collector-config.yaml" ]
     depends_on:
       - zipkin
+      - prometheus
     volumes:
       - ./otel-collector-logging-config.yaml:/etc/otel-collector-config.yaml
     ports:
@@ -44,7 +62,6 @@ services:
     container_name: greeting-service
     image: com.example/greeting-service:v1.0.0
     depends_on:
-      - zipkin
       - otel-collector
     environment:
       OTEL_TRACES_EXPORTER : otlp
@@ -57,17 +74,17 @@ services:
     build:
       context: ./greeting-service
     ports:
-      - "9090:9090"
+      - "9092:9092"
 
   hello-service:
     container_name: hello-service
     image: com.example/hello-service:v1.0.0
     depends_on:
-      - zipkin
       - otel-collector
     environment:
       OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: otlp
+      OTEL_METRIC_EXPORT_INTERVAL: 15000
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_RESOURCE_ATTRIBUTES: service.name=hello-service,service-version=1.0
       SPRING_APPLICATION_JSON: '{

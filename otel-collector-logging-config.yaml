@@ -15,6 +15,9 @@ exporters:
     endpoint: http://zipkin:9411/api/v2/spans
     tls:
       insecure: true
+  prometheus:
+    endpoint: otel-collector:8889
+    namespace: default
 
 service:
   pipelines:
@@ -25,4 +28,4 @@ service:
     metrics:
       receivers: [ otlp ]
       processors: [ batch ]
-      exporters: [ logging ]
+      exporters: [ logging , prometheus ]
