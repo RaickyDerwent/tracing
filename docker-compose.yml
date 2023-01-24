@@ -1,12 +1,12 @@
 version: '3'
 
 services:
-#  storage:
-#    image: ghcr.io/openzipkin/zipkin-mysql:${TAG:-latest}
-#    container_name: mysql
-#    # Uncomment to expose the storage port for testing
-#    # ports:
-#    #   - 3306:3306
+  #  storage:
+  #    image: ghcr.io/openzipkin/zipkin-mysql:${TAG:-latest}
+  #    container_name: mysql
+  #    # Uncomment to expose the storage port for testing
+  #    # ports:
+  #    #   - 3306:3306
 
   # Use MySQL instead of in-memory storage
   zipkin:
@@ -64,19 +64,20 @@ services:
     depends_on:
       - otel-collector
     environment:
-#      OTEL_TRACES_EXPORTER : otlp
-      #      OTEL_METRICS_EXPORTER : otlp
-      #      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
-      OTEL_TRACES_EXPORTER: zipkin
-      OTEL_EXPORTER_ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
-      OTEL_METRICS_EXPORTER: prometheus
-      OTEL_EXPORTER_PROMETHEUS_PORT: 8088
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      #      OTEL_TRACES_EXPORTER: zipkin
+      #      OTEL_EXPORTER_ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
+      #      OTEL_METRICS_EXPORTER: prometheus
+      #      OTEL_EXPORTER_PROMETHEUS_PORT: 8088
       OTEL_RESOURCE_ATTRIBUTES: service.name=greeting-service,service-version=1.0
     build:
       context: ./greeting-service
     ports:
       - "9092:9092"
       - "8088:8088"
+      - "8082:8082"
 
   hello-service:
     container_name: hello-service
@@ -84,20 +85,21 @@ services:
     depends_on:
       - otel-collector
     environment:
-      #      OTEL_TRACES_EXPORTER: otlp
-      #      OTEL_METRICS_EXPORTER: otlp
-      #      OTEL_METRIC_EXPORT_INTERVAL: 15000
-      #      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
-      OTEL_TRACES_EXPORTER: zipkin
-      OTEL_EXPORTER_ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
-      OTEL_METRICS_EXPORTER: prometheus
-      OTEL_EXPORTER_PROMETHEUS_PORT: 8089
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      #      OTEL_TRACES_EXPORTER: zipkin
+      #      OTEL_EXPORTER_ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
+      #      OTEL_METRICS_EXPORTER: prometheus
+      #      OTEL_EXPORTER_PROMETHEUS_PORT: 8089
       OTEL_RESOURCE_ATTRIBUTES: service.name=hello-service,service-version=1.0
       SPRING_APPLICATION_JSON: '{
-        "grpc.client.greeting-service.address":"static://greeting-service:9090"
+        "grpc.client.greeting-service.address":"static://greeting-service:9090",
+        "greeting.service.rest.endpoint":"http://greeting-service:8082"
       }'
     build:
       context: ./hello-service
     ports:
       - "9091:9091"
+      - "8080:8080"
       - "8089:8089"

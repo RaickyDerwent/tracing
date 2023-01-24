@@ -4,27 +4,24 @@ import com.example.greeting.controller.util.LogInterceptor;
 import com.example.greeting.model.GreetingRequest;
 import com.example.greeting.model.GreetingResponse;
 import com.example.greeting.model.GreetingServiceGrpc.GreetingServiceImplBase;
+import com.example.greeting.service.GreetingService;
 
 import net.devh.boot.grpc.server.service.GrpcService;
 
 import io.grpc.stub.StreamObserver;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@RequiredArgsConstructor
 @GrpcService(interceptors = { LogInterceptor.class })
-public class GreetingController extends GreetingServiceImplBase {
+public class GreetingGRPCController extends GreetingServiceImplBase {
 
-	private static final String[] greetings = new String[]{
-			"Have a good day",
-			"Have a great day",
-			"Have a wonderful day",
-			"Have a fruitful day"
-	};
+	private final GreetingService greetingService;
 
 	@Override
 	public void greet (GreetingRequest request, StreamObserver<GreetingResponse> responseObserver) {
-		final String greeting = greetings[request.getNum()];
-		final GreetingResponse greetingResponse = GreetingResponse.newBuilder().setGreeting(greeting).build();
+		final GreetingResponse greetingResponse = GreetingResponse.newBuilder().setGreeting(greetingService.getGreeting(request.getNum())).build();
 		responseObserver.onNext(greetingResponse);
 		responseObserver.onCompleted();
 	}
